@@ -10,7 +10,7 @@ fail() {
     exit 1
 }
 
-export AWS_DEFAULT_REGION=us-east-1
+export AWS_DEFAULT_REGION=sa-east-1
 
 datetag=$(date +%Y%m%d%H%M)
 identifier=deployer$datetag
