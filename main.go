@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"os/exec"
 	"path/filepath"
-	//"os"
+	"os"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elasticbeanstalk"
