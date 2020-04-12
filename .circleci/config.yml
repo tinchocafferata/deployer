@@ -50,9 +50,9 @@ jobs:
 
   #Another way is to set the environment variables with AWS credentials directly in the application
   # const (
-	#    AccessKeyId     = "xxxxxxxxxxxx"
-	#    SecretAccessKey = "xxxxxxxxxxxx"
-	#    Region          = "sa-east-1"
+  #    AccessKeyId     = "xxxxxxxxxxxx"
+  #    SecretAccessKey = "xxxxxxxxxxxx"
+  #    Region          = "sa-east-1"
   # )
   # 
   # os.Setenv("AWS_ACCESS_KEY_ID",     AccessKeyId)
