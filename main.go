@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"os/exec"
 	"path/filepath"
-
+	"os"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elasticbeanstalk"
@@ -23,8 +23,17 @@ import (
 type deployer struct {
 }
 
+const (
+	AccessKeyId     = "AKIARZZDSBG3VYBRBONP"
+	SecretAccessKey = "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"
+	Region          = "sa-east-1"
+)
+
 func main() {
 	var dplr deployer
+
+	os.Setenv("AWS_ACCESS_KEY_ID",     AccessKeyId)
+    os.Setenv("AWS_SECRET_ACCESS_KEY", SecretAccessKey)
 
 	// register routes
 	r := mux.NewRouter()
@@ -88,6 +97,12 @@ func deploy() {
 		session.New(),
 		&aws.Config{Region: aws.String("sa-east-1")},
 	)
+
+
+	//sess, err := session.NewSession(&aws.Config{
+	//	  Region:      aws.String("sa-east-1"),
+	//	  Credentials: credentials.NewStaticCredentials("AKIARZZDSBG3VYBRBONP", "IDhcPXs38IfuY8AB060BeFuMTmYXYxiNs/6GsEM+",""),
+	//	})
 
 	params := &elasticbeanstalk.UpdateEnvironmentInput{
 		ApplicationName: aws.String("invoicer"),

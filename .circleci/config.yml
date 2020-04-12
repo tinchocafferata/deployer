@@ -35,7 +35,19 @@ jobs:
          [ ! -e bin ] && mkdir bin;
          cp "${GOPATH_HEAD}/bin/${CIRCLE_PROJECT_REPONAME}" bin/deployer;
          docker build -t ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME} .;
-          
+
+  #The deployer application uses AWS SDK for GO. When creating a new session with AWS, it will
+  #look for credentials in different location sequentially (environment variables, execution roles, etc.)
+  #If we want the application to use environment variables, we need to have them configured in the docker
+  #image that we will build. This can be done like this:
+  #docker build --build-arg var_name=${VARIABLE_NAME} -t ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME} .;
+
+  #If we want to hardcode credentials in the application, it is done like this:
+  #sess, err := session.NewSession(&aws.Config{
+  #  Region:      aws.String("us-west-2"),
+  #  Credentials: credentials.NewStaticCredentials("AKID", "SECRET_KEY", "TOKEN"),
+  #})
+
    - deploy:
        command: |
          if [ "${CIRCLE_BRANCH}" == "master" ]; then
