@@ -23,17 +23,17 @@ import (
 type deployer struct {
 }
 
-//const (
-//	AccessKeyId     = "XXXXXXX"
-//	SecretAccessKey = "XXXXXXX"
-//	Region          = "sa-east-1"
-//)
+const (
+	AccessKeyId     = "AKIARZZDSBG3QCCJYA7T"
+	SecretAccessKey = "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"
+	Region          = "sa-east-1"
+)
 
 func main() {
 	var dplr deployer
 
-	//os.Setenv("AWS_ACCESS_KEY_ID",     AccessKeyId)
-    //os.Setenv("AWS_SECRET_ACCESS_KEY", SecretAccessKey)
+	os.Setenv("AWS_ACCESS_KEY_ID",     AccessKeyId)
+    os.Setenv("AWS_SECRET_ACCESS_KEY", SecretAccessKey)
 
 	// register routes
 	r := mux.NewRouter()
