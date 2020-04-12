@@ -67,9 +67,7 @@ jobs:
            github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME};
            mkdir -p bin;
            cp "$GOPATH_HEAD/bin/${CIRCLE_PROJECT_REPONAME}" bin/deployer;
-           docker build --build-arg AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-            --build-arg AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-            -t ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME} .;
+           docker build -t ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME} .;
            docker images --no-trunc | awk '/^app/ {print $3}' | \
              sudo tee $CIRCLE_ARTIFACTS/docker-image-shasum256.txt;
            docker push ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME};
