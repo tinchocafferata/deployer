@@ -1,55 +1,60 @@
-version: 2.1
-orbs:
-  aws-cli: circleci/aws-cli@1.0.0
-jobs:
- build:
-  # Variable expansion in working_directory not supported at this time (new content 2 to 3)
-  # You will need to modify the code below to reflect your github account/repo setup
-  working_directory: /go/src/github.com/tinchocafferata/deployer
+# These environment variables must be set in CircleCI UI
+#
+# DOCKER_EMAIL   - login info for docker hub
+# DOCKER_USER
+# DOCKER_PASS
+#
+# Read the README for more information.
+machine:
   environment:
-     GO15VENDOREXPERIMENT: 1
-  docker:
-   - image: circleci/golang:1.10
-     #The awscli beanstalk command freezes waiting for user input and the job
-     #never finishes, this environment variable must be set to prevent that
-     environment: 
-      PAGER: cat
-     
-  steps:
-   - checkout
-   - setup_remote_docker
-   - aws-cli/setup:
-         profile-name: circleci
-  
-   - run: echo 'export GOPATH_HEAD="$(echo ${GOPATH}|cut -d ':' -f 1)"' >> $BASH_ENV
-   - run: echo 'export GOPATH_BASE="${GOPATH_HEAD}/src/github.com/${CIRCLE_PROJECT_USERNAME}"' >> $BASH_ENV
-   - run: echo 'export DOCKER_REPO="$(if [ ${CIRCLE_PROJECT_USERNAME} == 'Securing-DevOps' ]; then echo securingdevops; else echo $DOCKER_USER; fi)"' >> $BASH_ENV
-   - run: mkdir -p "${GOPATH_BASE}"
-   - run: mkdir -p "${GOPATH_HEAD}/bin"
-   - run: go get github.com/govend/govend
-       
-   - run:
-       name: Build application container
-       command: |
-         go install --ldflags '-extldflags "-static"' github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME};
-         [ ! -e bin ] && mkdir bin;
-         cp "${GOPATH_HEAD}/bin/${CIRCLE_PROJECT_REPONAME}" bin/deployer;
-         docker build -t ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME} .;
-          
-   - deploy:
-       command: |
-         if [ "${CIRCLE_BRANCH}" == "master" ]; then
-           docker login -u ${DOCKER_USER} -p ${DOCKER_PASS};
-           go install --ldflags '-extldflags "-static"' \
-           github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME};
-           mkdir -p bin;
-           cp "$GOPATH_HEAD/bin/${CIRCLE_PROJECT_REPONAME}" bin/deployer;
-           docker build -t ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME} .;
-           docker images --no-trunc | awk '/^app/ {print $3}' | \
-             sudo tee $CIRCLE_ARTIFACTS/docker-image-shasum256.txt;
-           docker push ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME};
-           sudo apt-get update && sudo apt-get install -yy less;
-           export TERM=dumb && aws elasticbeanstalk update-environment \
-            --application-name deployer --environment-id e-z9pbhwrkeu \
-            --version-label deployer-api;
-         fi
+    GOPATH_HEAD: "$(echo $GOPATH | cut -d ':' -f 1)"
+    GOPATH_BASE: "$GOPATH_HEAD/src/github.com/$CIRCLE_PROJECT_USERNAME"
+    GO15VENDOREXPERIMENT: 1
+    DOCKER_REPO: "$(if [ $CIRCLE_PROJECT_USERNAME == 'Securing-DevOps' ]; then echo securingdevops; else echo $DOCKER_USER; fi)"
+
+  services:
+    - docker
+
+dependencies:
+  override:
+    - rm -rf ${GOPATH_BASE}/
+    - mkdir -p "$GOPATH_BASE"
+    - mkdir -p "$GOPATH/bin"
+    - cp -r ${HOME}/${CIRCLE_PROJECT_REPONAME} ${GOPATH_BASE}/
+    - go get github.com/govend/govend
+    - sudo pip install awscli
+
+test:
+  override:
+    - >
+        go test
+        github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
+    # Go applications in the busybox container must be built statically
+    - >
+        go install --ldflags '-extldflags "-static"'
+        github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
+    - '[ ! -e bin ] && mkdir bin'
+    - cp "$GOPATH_HEAD/bin/${CIRCLE_PROJECT_REPONAME}" bin/deployer
+    - chmod +x deploymentTests/*
+    - docker build -t ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME} .
+
+    # Run GOVEND to check if outdated dependencies are present
+    - 'GOPATH="$GOPATH_HEAD"; ( cd ${GOPATH_BASE}/${CIRCLE_PROJECT_REPONAME} && govend -u && git diff --quiet )'
+
+deployment:
+  hub_latest:
+    # appropriately tag and push the container to dockerhub
+    # only when on the master branch
+    branch: "master"
+    commands:
+      - >
+          docker login -e ${DOCKER_EMAIL}
+          -u ${DOCKER_USER} -p ${DOCKER_PASS}
+      # write the sha256 sum to an artifact to make image verification easier
+      - >
+        docker images --no-trunc | awk '/^app/ {print $3}' |
+        tee $CIRCLE_ARTIFACTS/docker-image-shasum256.txt
+      - docker push ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME}
+
+      # trigger ebs redeploy
+      - aws elasticbeanstalk update-environment --region sa-east-1 --application-name deployer --environment-id e-z9pbhwrkeu --version-label deployer-api
