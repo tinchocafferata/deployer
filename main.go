@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"os/exec"
 	"path/filepath"
-	"os"
+	
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elasticbeanstalk"
@@ -23,17 +23,9 @@ import (
 type deployer struct {
 }
 
-const (
-	AccessKeyId     = "AKIARZZDSBG3QCCJYA7T"
-	SecretAccessKey = "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"
-	Region          = "sa-east-1"
-)
 
 func main() {
 	var dplr deployer
-
-	os.Setenv("AWS_ACCESS_KEY_ID",     AccessKeyId)
-    os.Setenv("AWS_SECRET_ACCESS_KEY", SecretAccessKey)
 
 	// register routes
 	r := mux.NewRouter()
