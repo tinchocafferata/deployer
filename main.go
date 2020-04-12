@@ -24,8 +24,8 @@ type deployer struct {
 }
 
 //const (
-//	AccessKeyId     = "AKIARZZDSBG3QCCJYA7T"
-//	SecretAccessKey = "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"
+//	AccessKeyId     = "XXXXXXX"
+//	SecretAccessKey = "XXXXXXX"
 //	Region          = "sa-east-1"
 //)
 
